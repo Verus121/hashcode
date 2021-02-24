@@ -73,23 +73,6 @@ class Deliveries {
 };
 
 
-void printDelivery(string outputFileA, Deliveries deliveries) {
-    ofstream outputFile(outputFileA);
-
-    outputFile << deliveries.numberOfDeliveries << "\n";
-
-    for (int i = 0; i < deliveries.numberOfDeliveries; i++) {
-        ostringstream oss;
-        oss << deliveries.teamOrders[i].teamSize << " ";
-        for (int pizzaNumber : deliveries.teamOrders[i].pizzaNumbers) {
-            oss << pizzaNumber << " ";
-        }
-        outputFile << oss.str() << "\n";
-    }
-
-    outputFile.close();
-}
-
 void addTeamOrder(int teamSize, vector<Pizza> &copyPizzaList, Deliveries &deliveries) {
     TeamOrder teamOrder;
     teamOrder.teamSize = teamSize;
@@ -169,6 +152,24 @@ void algorithm4(Pizzaria &pizzaria, Deliveries &deliveries) {
     deliveries.numberOfDeliveries = deliveries.teamOrders.size();
 } // alg 4
 
+
+void printDelivery(string outputFileA, Deliveries deliveries) {
+    ofstream outputFile(outputFileA);
+
+    outputFile << deliveries.numberOfDeliveries << "\n";
+
+    for(TeamOrder order : deliveries.teamOrders) {
+        ostringstream oss;
+        oss << order.teamSize << " ";
+        for(int pizzaNumber : order.pizzaNumbers) {
+            oss << pizzaNumber << " ";
+        }
+        outputFile << oss.str() << "\n";
+    }
+
+    outputFile.close();
+}
+
 void printScore(Pizzaria & pizzaria, Deliveries & deliveries) {
     int score = 0;
 
@@ -197,17 +198,13 @@ int main() {
     // string inputFile = "files/ein.in";
     // string outputFile = "files/e_output.txt";
 
-    // should I get rid of pizzaria?
     Pizzaria pizzaria(inputFile);
     sort(pizzaria.pizzaList.begin(), pizzaria.pizzaList.end());
-
     Deliveries deliveries;
 
     algorithm4(pizzaria, deliveries);
 
     printDelivery(outputFile, deliveries);
-
     printScore(pizzaria, deliveries);
-
     return 0;
 }
