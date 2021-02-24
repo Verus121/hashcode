@@ -7,6 +7,7 @@
         "sstream": "cpp",
         "string": "cpp",
         "xtree": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "iterator": "cpp"
     }
 }

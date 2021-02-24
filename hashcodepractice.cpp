@@ -119,42 +119,15 @@ void algorithm4(Pizzaria & pizzaria, Deliveries & deliveries) {
 } // alg 4
 
 
-void printScore(Pizzaria & pizzaria, Deliveries & deliveries) {
-    int score = 0;
-
-    // get score of a single team 
-    for(int i = 0; i < deliveries.numberOfDeliveries; i++ ) {
-        set<string> teamIngredients; // use set for auto sorting and insert faster. 
-
-        // look through all pizzas the team gets and put any unique ingredients in teamIngredients
-        for(int pizzaNumIter = 0; pizzaNumIter < deliveries.teamOrders[i].teamSize; pizzaNumIter++ ) {
-            int pizzaNumber = deliveries.teamOrders[i].pizzaNumbers[pizzaNumIter];
-            vector<string> pizzaIngredients = pizzaria.pizzaList[pizzaNumber].ingredients;
-            for(string ingredient : pizzaIngredients) {
-                teamIngredients.insert(ingredient);
-            }
-        }
-
-        int uniqueTeamIngredients = teamIngredients.size();
-        score += uniqueTeamIngredients*uniqueTeamIngredients;
-    }
-
-    cout << "Score: " << score << endl;
-}
-
 int main() {
-    string inputFile = "files/ain.txt"; 
-    string outputFile = "files/a_output.txt";
-
-    // string inputFile = "files/bin.in";
-    // string outputFile = "files/b_output.txt";
-
+    // string inputFile = "files/ain.txt"; 
+    // string outputFile = "files/a_output.txt";
+    string inputFile = "files/bin.in";
+    string outputFile = "files/b_output.txt";
     // string inputFile = "files/cin.in";
     // string outputFile = "files/c_output.txt";
-
     // string inputFile = "files/din.in";
     // string outputFile = "files/d_output.txt";
-
     // string inputFile = "files/ein.in";
     // string outputFile = "files/e_output.txt";
 
@@ -164,9 +137,7 @@ int main() {
     Deliveries deliveries;
 
     algorithm4(pizzaria, deliveries);
-    
-    printScore(pizzaria, deliveries);
-    
+        
     printDelivery(outputFile, deliveries);
 
     return 0;
