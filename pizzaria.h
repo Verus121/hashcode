@@ -23,36 +23,25 @@ class Pizzaria {
         Pizzaria(string inputFile) {
             ifstream file(inputFile);
 
-            // put all inputs into vector of strings 
             string line;
-            vector<string> fileLines; 
+            vector< vector<string> > fileLines;
             while(getline(file, line)) {
-                fileLines.push_back(line);
+                istringstream iss(line);
+                vector<string> fileLine { istream_iterator<string>{iss}, istream_iterator<string>{} };
+                fileLines.push_back(fileLine);
             } 
 
-            string firstLine = fileLines[0];
-            istringstream iss(firstLine);
-            vector<string> fileFirstLine { istream_iterator<string>{iss}, istream_iterator<string>{} };
+            numberOfPizzas = stoi(fileLines[0][0]);
+            numOf2PersonTeams = stoi(fileLines[0][1]);
+            numOf3PersonTeams = stoi(fileLines[0][2]);
+            numOf4PersonTeams = stoi(fileLines[0][3]);
 
-            numberOfPizzas = stoi(fileFirstLine[0]);
-            numOf2PersonTeams = stoi(fileFirstLine[1]);
-            numOf3PersonTeams = stoi(fileFirstLine[2]);
-            numOf4PersonTeams = stoi(fileFirstLine[3]);
-
-            fileLines.erase(fileLines.begin()); // delete since we are done with it. 
-
-            for(string fileLine : fileLines) {
-                istringstream iss(fileLine);
-                vector<string> lineStrings { istream_iterator<string>{iss}, istream_iterator<string>{} };
-
+            for(int i = 1; i < fileLines.size(); i++) {
                 Pizza pizza;
-                pizza.numOfIngredients = stoi(lineStrings[0]);
-                lineStrings.erase(lineStrings.begin());
-
-                for(string ingredient : lineStrings) {
-                    pizza.ingredients.push_back(ingredient);
+                pizza.numOfIngredients = stoi(fileLines[i][0]);
+                for(int j = 1; j < fileLines[i].size(); j++) {
+                    pizza.ingredients.push_back(fileLines[i][j]);
                 }
-
                 pizza.pizzaNumber = pizzaList.size();
                 pizzaList.push_back(pizza);
             }

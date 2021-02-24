@@ -8,6 +8,7 @@
         "string": "cpp",
         "xtree": "cpp",
         "utility": "cpp",
-        "iterator": "cpp"
+        "iterator": "cpp",
+        "algorithm": "cpp"
     }
 }
