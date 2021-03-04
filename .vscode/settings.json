@@ -9,6 +9,8 @@
         "xtree": "cpp",
         "utility": "cpp",
         "iterator": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "iosfwd": "cpp",
+        "ostream": "cpp"
     }
 }

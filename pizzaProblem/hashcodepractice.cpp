@@ -72,52 +72,73 @@ class Deliveries {
         vector<TeamOrder> teamOrders;
 };
 
+// TODO: need to test now, and find error with smart order
 
-void addTeamOrder(int teamSize, vector<Pizza> &copyPizzaList, Deliveries &deliveries) {
+void smartestAddTeamOrder(int teamSize, vector<Pizza> &copyPizzaList, Deliveries &deliveries) {
     TeamOrder teamOrder;
     teamOrder.teamSize = teamSize;
 
     set<string> teamOrderIngredients;
 
-    for (int teamMemberIter = 0; teamMemberIter < teamSize; teamMemberIter++) {
+    // lets auto add the first one. 
+    Pizza pizza = copyPizzaList[0];
+    for (string ingredient : pizza.ingredients) {
+        teamOrderIngredients.insert(ingredient);
+    }
+    teamOrder.pizzaNumbers.push_back(pizza.pizzaNumber);
+    copyPizzaList.erase(copyPizzaList.begin());
+
+    for (int teamMemberIter = 1; teamMemberIter < teamSize; teamMemberIter++) {
 
         vector<pair<int, int>> pizzaScores; // can just be a vector of ints now.
 
         // find scores of top 10 pizzas.
         for (int copyPizzaListIter = 0; copyPizzaListIter < copyPizzaList.size() && copyPizzaListIter < 10; copyPizzaListIter++) {
             Pizza pizza = copyPizzaList[copyPizzaListIter];
+            set<string> copyTeamOrderIngredients = teamOrderIngredients; // use a hash?
 
-            set<string> copyTeamOrderIngredients = teamOrderIngredients;
-            int prePizzaTeamOrderIngredientsSize = copyTeamOrderIngredients.size();
-
-            vector<string> pizzaIngredients = pizza.ingredients;
-            for (string ingredient : pizzaIngredients) {
+            for (string ingredient : pizza.ingredients) {
                 copyTeamOrderIngredients.insert(ingredient);
             }
 
-            int postPizzaTeamOrderIngredientsSize = copyTeamOrderIngredients.size();
-            int pizzaScore = postPizzaTeamOrderIngredientsSize - prePizzaTeamOrderIngredientsSize;
-
-            pizzaScores.emplace_back(pizza.pizzaNumber, pizzaScore);
+            int pizzaScore = copyTeamOrderIngredients.size() - teamOrderIngredients.size(); // remove to opt
+            pizzaScores.emplace_back(pizzaScore, pizza.pizzaNumber); // swapping
         }
 
-        // select largest score
-        pair<int, int> currentBestPizza = pizzaScores[0];
+        // pizzaScore, pizza.pizzaNumber
+        sort(pizzaScores.begin(), pizzaScores.end());
+        pair<int, int> currentBestPizza = pizzaScores.back();
+
         int currentBestPizzaIter = 0; // easy delete
-        for (int pizzaScoresIter = 0; pizzaScoresIter < pizzaScores.size(); pizzaScoresIter++) {
-            if (currentBestPizza.second < pizzaScores[pizzaScoresIter].second) {
-                currentBestPizza = pizzaScores[pizzaScoresIter];
-                currentBestPizzaIter = pizzaScoresIter;
+        for(; currentBestPizzaIter < pizzaScores.size(); currentBestPizzaIter++) {
+            if(currentBestPizza.second == copyPizzaList[currentBestPizzaIter].pizzaNumber) {
+                break;
             }
         }
 
-        // add pizza to teamorder
-        teamOrder.pizzaNumbers.push_back(currentBestPizza.first);
-
-        copyPizzaList.erase(copyPizzaList.begin() + currentBestPizzaIter);
+        teamOrder.pizzaNumbers.push_back(currentBestPizza.second);
+        copyPizzaList.erase(copyPizzaList.begin() + currentBestPizzaIter); // and this is why we needed that iter.
     }
 
     deliveries.teamOrders.push_back(teamOrder);
+}
+
+void dumbAddTeamOrder(int teamSize, vector<Pizza> &copyPizzaList, Deliveries &deliveries) {
+    TeamOrder order;
+    order.teamSize = teamSize;
+
+    for(int i = 0; i < teamSize; i++) {
+        order.pizzaNumbers.push_back(copyPizzaList[0].pizzaNumber);
+        copyPizzaList.erase(copyPizzaList.begin());
+    } // this is fastest i think
+
+
+    deliveries.teamOrders.push_back(order);
+}
+
+void addTeamOrder(int teamSize, vector<Pizza> &copyPizzaList, Deliveries &deliveries) {
+    dumbAddTeamOrder(teamSize, copyPizzaList, deliveries);
+    // smartestAddTeamOrder(teamSize, copyPizzaList, deliveries);
 }
 
 void algorithm4(Pizzaria &pizzaria, Deliveries &deliveries) {
@@ -130,27 +151,24 @@ void algorithm4(Pizzaria &pizzaria, Deliveries &deliveries) {
         addTeamOrder(4, copyPizzaList, deliveries);
         numbersOfPizzaLeft = numbersOfPizzaLeft - 4;
         numberOf4TeamsLeft = numberOf4TeamsLeft - 1;
-        cout << deliveries.teamOrders.size() << endl;
     }
 
     int numberOf3TeamsLeft = pizzaria.numOf3PersonTeams;
     while (numbersOfPizzaLeft >= 3 && numberOf3TeamsLeft >= 1) {
         addTeamOrder(3, copyPizzaList, deliveries);
         numbersOfPizzaLeft = numbersOfPizzaLeft - 3;
-        numberOf4TeamsLeft = numberOf4TeamsLeft - 1;
-        cout << deliveries.teamOrders.size() << endl;
+        numberOf3TeamsLeft = numberOf3TeamsLeft - 1;
     }
 
     int numberOf2TeamsLeft = pizzaria.numOf2PersonTeams;
     while (numbersOfPizzaLeft >= 2 && numberOf2TeamsLeft >= 1) {
         addTeamOrder(2, copyPizzaList, deliveries);
         numbersOfPizzaLeft = numbersOfPizzaLeft - 2;
-        numberOf4TeamsLeft = numberOf4TeamsLeft - 1;
-        cout << deliveries.teamOrders.size() << endl;
+        numberOf2TeamsLeft = numberOf2TeamsLeft - 1;
     }
 
     deliveries.numberOfDeliveries = deliveries.teamOrders.size();
-} // alg 4
+}
 
 
 void printDelivery(string outputFileA, Deliveries deliveries) {
@@ -187,16 +205,19 @@ void printScore(Pizzaria & pizzaria, Deliveries & deliveries) {
 }
 
 int main() {
+    // dumb C_output real 6.7
+    // smart C_output real 6.8
+
     // string inputFile = "files/ain.txt";
     // string outputFile = "files/a_output.txt";
     string inputFile = "files/bin.in";
     string outputFile = "files/b_output.txt";
     // string inputFile = "files/cin.in";
-    // string outputFile = "files/c_output.txt";
+    // string outputFile = "files/c_output.txt"; 
     // string inputFile = "files/din.in";
-    // string outputFile = "files/d_output.txt";
+    // string outputFile = "files/d_output.txt"; // 6m
     // string inputFile = "files/ein.in";
-    // string outputFile = "files/e_output.txt";
+    // string outputFile = "files/e_output.txt"; // 14m
 
     Pizzaria pizzaria(inputFile);
     sort(pizzaria.pizzaList.begin(), pizzaria.pizzaList.end());
