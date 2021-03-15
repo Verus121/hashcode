@@ -8,52 +8,75 @@
 #include <set>
 using namespace std;
 
-int main() {
-    // string inputFile = "files/ain.txt";
-    // string outputFile = "files/a_output.txt";
-    string inputFile = "files/bin.in";
-    string outputFile = "files/b_output.txt";
-    // string inputFile = "files/cin.in";
-    // string outputFile = "files/c_output.txt"; 
-    // string inputFile = "files/din.in";
-    // string outputFile = "files/d_output.txt";
-    // string inputFile = "files/ein.in";
-    // string outputFile = "files/e_output.txt";
-
-    string line;
-
+void getPizzaMap(map<int, vector<string>> & pizzaMap, string inputFile) {
     ifstream file(inputFile);
-    getline(file, line); // first line not needed
 
-    int iter = 0;
-    map<int, vector<string>> pizzaMap;
-    while (getline(file, line)) {
-        istringstream iss(line);
-        vector<string> fileLine{istream_iterator<string>{iss}, istream_iterator<string>{}};
-        pizzaMap[iter] = fileLine;
-        iter++;
+    string fileLine;
+    getline(file, fileLine); // first line not needed
+
+    int pizzaNumber = 0;
+    while (getline(file, fileLine)) {
+        istringstream iss(fileLine);
+        vector<string> ingredients {istream_iterator<string> {iss}, istream_iterator<string> {}};
+        ingredients.erase(ingredients.begin()); // first int is not needed
+        pizzaMap[pizzaNumber] = ingredients;
+        pizzaNumber++;
     }
 
-    file.close(); // input file is loaded
+    file.close();
+}
 
-    ifstream ofile(outputFile);
-    getline(ofile, line); // first line not needed
+void getOutputFile(vector<vector<int>> & teamOrders, string outputFile) {
+    ifstream file(outputFile);
 
+    string fileLine;
+    getline(file, fileLine); // first line not needed
+
+    while (getline(file, fileLine)) {
+        istringstream iss(fileLine);
+        vector<int> pizzaNumbers{istream_iterator<int>{iss}, istream_iterator<int>{}};
+        pizzaNumbers.erase(pizzaNumbers.begin()); // first int is not needed
+        teamOrders.push_back(pizzaNumbers);
+    }
+
+    file.close();
+}
+
+int calculateScore(map<int, vector<string>> & pizzaMap, vector<vector<int>> & teamOrders) {
     int score = 0;
-    while (getline(ofile, line)) {
-        istringstream iss(line);
-        vector<int> fileLine{istream_iterator<int>{iss}, istream_iterator<int>{}};
 
+    for (vector<int> pizzaNumbers : teamOrders) {
         set<string> teamIngredients;
-        for(int pizzaNumber = 1; pizzaNumber <= fileLine[0]; pizzaNumber++) {
-            vector<string> pizza = pizzaMap[fileLine[pizzaNumber]];
-            for(int i = 1; i < pizza.size(); i++) {
-                teamIngredients.insert(pizza[i]);
+        for(int pizzaNumber : pizzaNumbers) {
+            for(string ingredient : pizzaMap[pizzaNumber]) {
+                teamIngredients.insert(ingredient);
             }
         }
         score += teamIngredients.size()*teamIngredients.size();
     }
-    cout << "Score: " << score << endl;
 
-    ofile.close();
+    return score;
+}
+
+int getScore(string inputFile, string outputFile) {
+    map<int, vector<string>> pizzaMap;
+    getPizzaMap(pizzaMap, inputFile);
+
+    vector<vector<int>> teamOrders;
+    getOutputFile(teamOrders, outputFile);
+
+    return calculateScore(pizzaMap, teamOrders);
+}
+
+int main() {
+    cout << "A Score: " << getScore("files/ain.txt", "files/a_output.txt") << endl; // 49
+    cout << "B Score: " << getScore("files/bin.in", "files/b_output.txt") << endl; // 6,737
+    cout << "C Score: " << getScore("files/cin.in", "files/c_output.txt") << endl; // 686,519,933
+    cout << "D Score: " << getScore("files/din.in", "files/d_output.txt") << endl; // 5,848,016
+    cout << "E Score: " << getScore("files/ein.in", "files/e_output.txt") << endl; // 8,313,931
+
+    // cout << "B Score: " << getScore("files/bin.in", "files/hunterb.txt") << endl; // 7,244
+    // cout << "C Score: " << getScore("files/cin.in", "files/hunterc.txt") << endl; // 705,442,517
+    // cout << "D Score: " << getScore("files/din.in", "files/hunterd.txt") << endl; // 7,747,922
+    // cout << "E Score: " << getScore("files/ein.in", "files/huntere.txt") << endl; // 10,674,218
 }
