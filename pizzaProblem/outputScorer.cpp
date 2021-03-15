@@ -70,10 +70,10 @@ int getScore(string inputFile, string outputFile) {
 
 int main() {
     cout << "A Score: " << getScore("files/ain.txt", "files/a_output.txt") << endl; // 49
-    cout << "B Score: " << getScore("files/bin.in", "files/b_output.txt") << endl; // 6,737
-    cout << "C Score: " << getScore("files/cin.in", "files/c_output.txt") << endl; // 686,519,933
-    cout << "D Score: " << getScore("files/din.in", "files/d_output.txt") << endl; // 5,848,016
-    cout << "E Score: " << getScore("files/ein.in", "files/e_output.txt") << endl; // 8,313,931
+    cout << "B Score: " << getScore("files/bin.in", "files/b_output.txt") << endl; // 11,555
+    cout << "C Score: " << getScore("files/cin.in", "files/c_output.txt") << endl; // 706,947,263
+    cout << "D Score: " << getScore("files/din.in", "files/d_output.txt") << endl; // 7,865,154
+    cout << "E Score: " << getScore("files/ein.in", "files/e_output.txt") << endl; // 10,791,650
 
     // cout << "B Score: " << getScore("files/bin.in", "files/hunterb.txt") << endl; // 7,244
     // cout << "C Score: " << getScore("files/cin.in", "files/hunterc.txt") << endl; // 705,442,517

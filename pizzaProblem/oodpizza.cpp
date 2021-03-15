@@ -14,9 +14,10 @@ typedef int PizzaNumber;
 typedef int NumberOfIngredients;
 typedef int TeamSize;
 typedef string Ingredient;
+typedef int IngredientNum;
 
-typedef vector<Ingredient> Ingredients;
-typedef unordered_map<PizzaNumber, Ingredients> PizzaMap;
+typedef set<IngredientNum> IngredientsNums;
+typedef unordered_map<PizzaNumber, IngredientsNums> PizzaMap;
 
 typedef pair<NumberOfIngredients, PizzaNumber> Toppings;
 typedef set<Toppings> ToppingsSet;
@@ -25,6 +26,9 @@ typedef set<Toppings>::reverse_iterator PizzaToppingsSetIter;
 typedef vector<PizzaNumber> DeliveryPizzas;
 typedef pair<TeamSize, DeliveryPizzas> Delivery;
 typedef vector<Delivery> Deliveries;
+
+typedef unordered_map<Ingredient, IngredientNum> IngredientsStringMap;
+typedef unordered_map<IngredientNum, Ingredient> IngredientsNumMap;
 
 class Pizzaria {
 public:
@@ -36,15 +40,12 @@ public:
     int team3Deliveries;
     int team4Deliveries;
 
-    // TODO 
-    // change this so that it is a pizzaNumber and IngredientsHashs
-    // if you need a pizzaNumbers actual list of ingredients
-    // for i in pizzaMapp[pizzaNumber]->second.size
-        // pizzaMap[pizzaNumber]->second[i] // this is a string.
-    // i have no idea how to make this work though lol.
     PizzaMap pizzaMap; 
     ToppingsSet toppingsSet;
     Deliveries deliveries;
+
+    IngredientsStringMap ingredientsStringMap; // ing to ingNum
+    IngredientsNumMap ingredientsNumMap; // ingNum to ing
 
     Pizzaria(string inputFile, string outputFile) {
         initializeValues(inputFile);
@@ -71,42 +72,46 @@ public:
 
     void initializeValues(string inputFile) {
         ifstream file(inputFile);
-
         file >> numberOfPizzas >> team2 >> team3 >> team4;
-        
         for(PizzaNumber pizzaNumber = 0; pizzaNumber < numberOfPizzas; pizzaNumber++) {
             NumberOfIngredients numberOfIngredients;
             file >> numberOfIngredients;
 
-            Ingredients ingredients;
-            ingredients.reserve(numberOfIngredients);
+            IngredientsNums ingredientsNums;
+
             for(int i = 0; i < numberOfIngredients; i++) {
                 Ingredient ingredient;
                 file >> ingredient;
-                ingredients.emplace_back(ingredient);
+
+                IngredientNum ingredientNum;
+                if(ingredientsStringMap.find(ingredient) == ingredientsStringMap.end()) {
+                    ingredientNum = ingredientsStringMap.size();
+                    ingredientsStringMap[ingredient] = ingredientNum;
+                    ingredientsNumMap[ingredientNum] = ingredient;
+                } else {
+                    ingredientNum = ingredientsStringMap[ingredient];
+                }
+                ingredientsNums.insert(ingredientNum);
             }
-            pizzaMap[pizzaNumber] = ingredients;
+            pizzaMap[pizzaNumber] = ingredientsNums;
 
             toppingsSet.insert(make_pair(numberOfIngredients, pizzaNumber));
         }  
-        
         file.close();
 
         initializeDeliveryStats();
     }
 
         Delivery createDelivery(int teamSize) {
-            Delivery delivery;
+            Delivery delivery; // teamsize, pizza#, pizza#, pizza#
             delivery.first = teamSize;
 
             PizzaNumber mostToppingsPizzaNumber = toppingsSet.rbegin()->second;
             delivery.second.emplace_back(mostToppingsPizzaNumber);
-            // Optimizing ---
-            set<string> teamIngredientsSet; // TODO - turn this into ints.
-            for(Ingredient ingredient : pizzaMap[mostToppingsPizzaNumber]) {
-                teamIngredientsSet.insert(ingredient);
+            set<IngredientNum> teamIngredientsNumsSet;
+            for(IngredientNum ingredientNum : pizzaMap[mostToppingsPizzaNumber]) {
+                teamIngredientsNumsSet.insert(ingredientNum);
             }
-
             toppingsSet.erase(*toppingsSet.rbegin());
             pizzaMap.erase(mostToppingsPizzaNumber);
 
@@ -120,10 +125,12 @@ public:
 
                     PizzaNumber pizzaNumber = toppingsIter->second;
 
-                    set<string> copyTeamToppings = teamIngredientsSet;
-                    copy(pizzaMap[pizzaNumber].begin(), pizzaMap[pizzaNumber].end(), inserter(copyTeamToppings, copyTeamToppings.end()));
+                    vector<int> result;
+                    set_difference(pizzaMap[pizzaNumber].begin(), pizzaMap[pizzaNumber].end(),
+                                    teamIngredientsNumsSet.begin(), teamIngredientsNumsSet.end(),
+                                    back_inserter(result));
+                    int newToppings = result.size();
                     
-                    int newToppings = copyTeamToppings.size() - teamIngredientsSet.size();
                     if(newToppings >= mostToppingsAdded.first) {
                         mostToppingsAdded.first = newToppings;
                         mostToppingsAdded.second = pizzaNumber;
@@ -134,8 +141,8 @@ public:
                 PizzaNumber mostToppingsAddedPizzaNumber = mostToppingsAdded.second;
                 delivery.second.emplace_back(mostToppingsAddedPizzaNumber);
 
-                for(Ingredient ingredient : pizzaMap[mostToppingsAddedPizzaNumber]) {
-                    teamIngredientsSet.insert(ingredient);
+                for(IngredientNum ingredientNum : pizzaMap[mostToppingsAddedPizzaNumber]) {
+                    teamIngredientsNumsSet.insert(ingredientNum);
                 }
 
                 toppingsSet.erase(*pizzaToppingsPointer);
@@ -169,10 +176,10 @@ public:
     }
 };
 
-int main() { // 0.20s
-    // Pizzaria pizzaria("files/ain.txt", "files/a_output.txt");   // 49 | 0.01s
-    Pizzaria pizzaria("files/bin.in", "files/b_output.txt"); // 6737 | 0.288s
-    // Pizzaria pizzaria("files/cin.in", "files/c_output.txt"); // 220,910,920 | 0.9s
-    // Pizzaria pizzaria("files/din.in", "files/d_output.txt"); // 2,140,547 | 1m43s
-    // Pizzaria pizzaria("files/ein.in", "files/e_output.txt"); // 7,326,413 | 22m18s
+int main() { // 0.23s // 0.095
+    // Pizzaria pizzaria("files/ain.txt", "files/a_output.txt");
+    // Pizzaria pizzaria("files/bin.in", "files/b_output.txt"); // 0.1
+    Pizzaria pizzaria("files/cin.in", "files/c_output.txt"); // 10s
+    // Pizzaria pizzaria("files/din.in", "files/d_output.txt"); // 1m53s
+    // Pizzaria pizzaria("files/ein.in", "files/e_output.txt"); // 13m30s
 }
