@@ -7,19 +7,20 @@
 #include <iterator>
 #include <algorithm>
 #include <set>
+#include <unordered_map>
 using namespace std;
 
 typedef int PizzaNumber;
-typedef int Toppings;
+typedef int NumberOfIngredients;
 typedef int TeamSize;
 typedef string Ingredient;
 
 typedef vector<Ingredient> Ingredients;
-typedef map<PizzaNumber, Ingredients> PizzaMap;
+typedef unordered_map<PizzaNumber, Ingredients> PizzaMap;
 
-typedef pair<Toppings, PizzaNumber> PizzaToppings;
-typedef set<PizzaToppings> PizzaToppingsSet;
-typedef set<PizzaToppings>::reverse_iterator PizzaToppingsSetIter;
+typedef pair<NumberOfIngredients, PizzaNumber> Toppings;
+typedef set<Toppings> ToppingsSet;
+typedef set<Toppings>::reverse_iterator PizzaToppingsSetIter;
 
 typedef vector<PizzaNumber> DeliveryPizzas;
 typedef pair<TeamSize, DeliveryPizzas> Delivery;
@@ -31,14 +32,18 @@ public:
     int team2;
     int team3;
     int team4;
-    int pizzasToDeliver;
     int team2Deliveries;
     int team3Deliveries;
     int team4Deliveries;
-    int totalDeliveries;
 
-    PizzaMap pizzaMap;
-    PizzaToppingsSet pizzaToppingsSet;
+    // TODO 
+    // change this so that it is a pizzaNumber and IngredientsHashs
+    // if you need a pizzaNumbers actual list of ingredients
+    // for i in pizzaMapp[pizzaNumber]->second.size
+        // pizzaMap[pizzaNumber]->second[i] // this is a string.
+    // i have no idea how to make this work though lol.
+    PizzaMap pizzaMap; 
+    ToppingsSet toppingsSet;
     Deliveries deliveries;
 
     Pizzaria(string inputFile, string outputFile) {
@@ -47,111 +52,108 @@ public:
         outputDeliveries(outputFile);
     }
 
+        int initializeTeamDeliveries(int teamSize, int team, int & numberOfPizzasCopy) {
+            int teamSizeLeft = team;
+            while(numberOfPizzasCopy >= teamSize && teamSizeLeft > 0) {
+                numberOfPizzasCopy -= teamSize;
+                teamSizeLeft--;
+            }
+            return team-teamSizeLeft;
+        }
+
+        void initializeDeliveryStats() {
+            int numberOfPizzasCopy = numberOfPizzas;
+            team4Deliveries = initializeTeamDeliveries(4, team4, numberOfPizzasCopy);
+            team3Deliveries = initializeTeamDeliveries(3, team3, numberOfPizzasCopy);
+            team2Deliveries = initializeTeamDeliveries(2, team2, numberOfPizzasCopy);
+            deliveries.reserve(team4Deliveries+team3Deliveries+team2Deliveries);
+        }
+
     void initializeValues(string inputFile) {
         ifstream file(inputFile);
+
         file >> numberOfPizzas >> team2 >> team3 >> team4;
+        
         for(PizzaNumber pizzaNumber = 0; pizzaNumber < numberOfPizzas; pizzaNumber++) {
-            Toppings toppings;
-            file >> toppings;
+            NumberOfIngredients numberOfIngredients;
+            file >> numberOfIngredients;
+
             Ingredients ingredients;
-            for(int i = 0; i < toppings; i++) {
+            ingredients.reserve(numberOfIngredients);
+            for(int i = 0; i < numberOfIngredients; i++) {
                 Ingredient ingredient;
                 file >> ingredient;
-                ingredients.push_back(ingredient);
+                ingredients.emplace_back(ingredient);
             }
             pizzaMap[pizzaNumber] = ingredients;
-            PizzaToppings pizzaToppings; 
-            pizzaToppings.first = toppings;
-            pizzaToppings.second = pizzaNumber;
-            pizzaToppingsSet.insert(pizzaToppings);
+
+            toppingsSet.insert(make_pair(numberOfIngredients, pizzaNumber));
         }  
+        
         file.close();
 
-        int numberOfPizzasCopy = numberOfPizzas;
-        int team2Copy = team2;
-        int team3Copy = team3;
-        int team4Copy = team4;
-        while(numberOfPizzasCopy >= 4 && team4Copy > 0) {
-            numberOfPizzasCopy -= 4;
-            team4Copy--;
-        }
-        while(numberOfPizzasCopy >= 3 && team3Copy > 0) {
-            numberOfPizzasCopy -= 3;
-            team3Copy--;
-        }
-        while(numberOfPizzasCopy >= 2 && team2Copy > 0) {
-            numberOfPizzasCopy -= 2;
-            team2Copy--;
-        }
-        pizzasToDeliver = numberOfPizzas - numberOfPizzasCopy;
-        team2Deliveries = team2 - team2Copy;
-        team3Deliveries = team3 - team3Copy;
-        team4Deliveries = team4 - team4Copy;
-        totalDeliveries = team2Deliveries + team3Deliveries + team4Deliveries;
+        initializeDeliveryStats();
     }
 
-    Delivery createDelivery(int teamSize) {
-        Delivery delivery;
-        delivery.first = teamSize;
+        Delivery createDelivery(int teamSize) {
+            Delivery delivery;
+            delivery.first = teamSize;
 
-        PizzaNumber mostToppingsPizzaNumber = pizzaToppingsSet.rbegin()->second;
-        delivery.second.push_back(mostToppingsPizzaNumber);
+            PizzaNumber mostToppingsPizzaNumber = toppingsSet.rbegin()->second;
+            delivery.second.emplace_back(mostToppingsPizzaNumber);
+            // Optimizing ---
+            set<string> teamIngredientsSet; // TODO - turn this into ints.
+            for(Ingredient ingredient : pizzaMap[mostToppingsPizzaNumber]) {
+                teamIngredientsSet.insert(ingredient);
+            }
 
-        set<string> teamToppings;
-        for(Ingredient ingredient : pizzaMap[mostToppingsPizzaNumber]) {
-            teamToppings.insert(ingredient);
-        }
+            toppingsSet.erase(*toppingsSet.rbegin());
+            pizzaMap.erase(mostToppingsPizzaNumber);
 
-        pizzaToppingsSet.erase(*pizzaToppingsSet.rbegin());
-        pizzaMap.erase(mostToppingsPizzaNumber);
+            for(int teamMember = 1; teamMember < teamSize; teamMember++) {
+                auto pizzaToppingsPointer = toppingsSet.rbegin();
+                Toppings mostToppingsAdded(0, 0);
 
-        for(int teamMember = 1; teamMember < teamSize; teamMember++) {
-            auto pizzaToppingsPointer = pizzaToppingsSet.rbegin(); // new
-            pair<Toppings, PizzaNumber> mostToppingsAdded(0, 0);
+                // need to improve this - is n*n rn.
+                for (PizzaToppingsSetIter toppingsIter = toppingsSet.rbegin(); toppingsIter != toppingsSet.rend(); toppingsIter++) {
+                    if(mostToppingsAdded.first > toppingsIter->first) { break; }
 
-            // need to improve this - is n*n rn.
-            for (PizzaToppingsSetIter toppingsIter = pizzaToppingsSet.rbegin(); toppingsIter != pizzaToppingsSet.rend(); toppingsIter++) {
-                if(mostToppingsAdded.first > toppingsIter->first) { break; }
+                    PizzaNumber pizzaNumber = toppingsIter->second;
 
-                PizzaNumber pizzaNumber = toppingsIter->second;
-
-                set<string> copyTeamToppings = teamToppings;
-                copy(pizzaMap[pizzaNumber].begin(), pizzaMap[pizzaNumber].end(), inserter(copyTeamToppings, copyTeamToppings.end()));
-                
-                int newToppings = copyTeamToppings.size() - teamToppings.size();
-                if(newToppings >= mostToppingsAdded.first) {
-                    mostToppingsAdded.first = newToppings;
-                    mostToppingsAdded.second = pizzaNumber;
-                    pizzaToppingsPointer = toppingsIter; // new
+                    set<string> copyTeamToppings = teamIngredientsSet;
+                    copy(pizzaMap[pizzaNumber].begin(), pizzaMap[pizzaNumber].end(), inserter(copyTeamToppings, copyTeamToppings.end()));
+                    
+                    int newToppings = copyTeamToppings.size() - teamIngredientsSet.size();
+                    if(newToppings >= mostToppingsAdded.first) {
+                        mostToppingsAdded.first = newToppings;
+                        mostToppingsAdded.second = pizzaNumber;
+                        pizzaToppingsPointer = toppingsIter;
+                    }
                 }
-            }
 
-            PizzaNumber mostToppingsAddedPizzaNumber = mostToppingsAdded.second;
-            delivery.second.push_back(mostToppingsAddedPizzaNumber);
+                PizzaNumber mostToppingsAddedPizzaNumber = mostToppingsAdded.second;
+                delivery.second.emplace_back(mostToppingsAddedPizzaNumber);
 
-            for(Ingredient ingredient : pizzaMap[mostToppingsAddedPizzaNumber]) {
-                teamToppings.insert(ingredient);
-            }
+                for(Ingredient ingredient : pizzaMap[mostToppingsAddedPizzaNumber]) {
+                    teamIngredientsSet.insert(ingredient);
+                }
 
-            pizzaToppingsSet.erase(*pizzaToppingsPointer);
-            pizzaMap.erase(mostToppingsAddedPizzaNumber);
-        } // teamsize-1
+                toppingsSet.erase(*pizzaToppingsPointer);
+                pizzaMap.erase(mostToppingsAddedPizzaNumber);
+            } // teamsize-1
 
-        return delivery;
-    }
-
-    void calculateDeliveriesOfTeam(int teamSize, int & teamsLeft) {
-        while (numberOfPizzas >= teamSize && teamsLeft >= 1) {
-            deliveries.push_back(createDelivery(teamSize));
-            numberOfPizzas -= teamSize;
-            teamsLeft--;
+            return delivery;
         }
-    }
+
+        void calculateDeliveriesOfTeam(int teamSize, int teamDeliveries) {
+            for(int i = 0; i < teamDeliveries; i++)
+                deliveries.emplace_back(createDelivery(teamSize));
+        }
 
     void calculateDeliveries() {
-        calculateDeliveriesOfTeam(4, team4);
-        calculateDeliveriesOfTeam(3, team3);
-        calculateDeliveriesOfTeam(2, team2);
+        calculateDeliveriesOfTeam(4, team4Deliveries);
+        calculateDeliveriesOfTeam(3, team3Deliveries);
+        calculateDeliveriesOfTeam(2, team2Deliveries);
     }
 
     void outputDeliveries(string outputFile) {
@@ -167,7 +169,7 @@ public:
     }
 };
 
-int main() {
+int main() { // 0.20s
     // Pizzaria pizzaria("files/ain.txt", "files/a_output.txt");   // 49 | 0.01s
     Pizzaria pizzaria("files/bin.in", "files/b_output.txt"); // 6737 | 0.288s
     // Pizzaria pizzaria("files/cin.in", "files/c_output.txt"); // 220,910,920 | 0.9s
