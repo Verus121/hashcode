@@ -13,29 +13,25 @@ using namespace std;
 typedef int PizzaNumber;
 typedef int NumberOfIngredients;
 typedef int TeamSize;
-typedef string Ingredient;
 typedef int IngredientNum;
+typedef string Ingredient;
 
 typedef set<IngredientNum> IngredientsNums;
 typedef unordered_map<PizzaNumber, IngredientsNums> PizzaMap;
 
-typedef pair<NumberOfIngredients, PizzaNumber> Toppings;
-typedef set<Toppings> ToppingsSet;
-typedef set<Toppings>::reverse_iterator PizzaToppingsSetIter;
+typedef unordered_map<Ingredient, IngredientNum> IngredientsToNumMap;
+
+typedef pair<NumberOfIngredients, PizzaNumber> ToppingsOfPizza;
+typedef set<ToppingsOfPizza> ToppingsSet;
+typedef set<ToppingsOfPizza>::reverse_iterator ToppingsSetIter;    
 
 typedef vector<PizzaNumber> DeliveryPizzas;
 typedef pair<TeamSize, DeliveryPizzas> Delivery;
 typedef vector<Delivery> Deliveries;
 
-typedef unordered_map<Ingredient, IngredientNum> IngredientsStringMap;
-typedef unordered_map<IngredientNum, Ingredient> IngredientsNumMap;
 
 class Pizzaria {
 public:
-    int numberOfPizzas;
-    int team2;
-    int team3;
-    int team4;
     int team2Deliveries;
     int team3Deliveries;
     int team4Deliveries;
@@ -44,126 +40,96 @@ public:
     ToppingsSet toppingsSet;
     Deliveries deliveries;
 
-    IngredientsStringMap ingredientsStringMap; // ing to ingNum
-    IngredientsNumMap ingredientsNumMap; // ingNum to ing
-
-    Pizzaria(string inputFile, string outputFile) {
+    Pizzaria(const string inputFile, const string outputFile) {
         initializeValues(inputFile);
         calculateDeliveries();
         outputDeliveries(outputFile);
     }
 
-        int initializeTeamDeliveries(int teamSize, int team, int & numberOfPizzasCopy) {
-            int teamSizeLeft = team;
-            while(numberOfPizzasCopy >= teamSize && teamSizeLeft > 0) {
-                numberOfPizzasCopy -= teamSize;
-                teamSizeLeft--;
-            }
-            return team-teamSizeLeft;
+    int initializeTeamDeliveries(const int teamSize, const int team, int & numberOfPizzas) {
+        int teamDeliveries;
+        for(teamDeliveries = 0; teamDeliveries < team; teamDeliveries++) {
+            if(numberOfPizzas < teamSize) break;
+            numberOfPizzas -= teamSize;
         }
+        return teamDeliveries;
+    }
 
-        void initializeDeliveryStats() {
-            int numberOfPizzasCopy = numberOfPizzas;
-            team4Deliveries = initializeTeamDeliveries(4, team4, numberOfPizzasCopy);
-            team3Deliveries = initializeTeamDeliveries(3, team3, numberOfPizzasCopy);
-            team2Deliveries = initializeTeamDeliveries(2, team2, numberOfPizzasCopy);
-            deliveries.reserve(team4Deliveries+team3Deliveries+team2Deliveries);
-        }
-
-    void initializeValues(string inputFile) {
+    void initializeValues(const string inputFile) {
         ifstream file(inputFile);
+        int numberOfPizzas, team2, team3, team4;
         file >> numberOfPizzas >> team2 >> team3 >> team4;
+
+        IngredientsToNumMap ingredientsToNumMap;
         for(PizzaNumber pizzaNumber = 0; pizzaNumber < numberOfPizzas; pizzaNumber++) {
             NumberOfIngredients numberOfIngredients;
             file >> numberOfIngredients;
 
             IngredientsNums ingredientsNums;
-
             for(int i = 0; i < numberOfIngredients; i++) {
                 Ingredient ingredient;
                 file >> ingredient;
-
-                IngredientNum ingredientNum;
-                if(ingredientsStringMap.find(ingredient) == ingredientsStringMap.end()) {
-                    ingredientNum = ingredientsStringMap.size();
-                    ingredientsStringMap[ingredient] = ingredientNum;
-                    ingredientsNumMap[ingredientNum] = ingredient;
-                } else {
-                    ingredientNum = ingredientsStringMap[ingredient];
-                }
-                ingredientsNums.insert(ingredientNum);
+                ingredientsToNumMap.emplace(ingredient, ingredientsToNumMap.size()); // Important
+                ingredientsNums.emplace(ingredientsToNumMap[ingredient]);
             }
             pizzaMap[pizzaNumber] = ingredientsNums;
 
-            toppingsSet.insert(make_pair(numberOfIngredients, pizzaNumber));
-        }  
-        file.close();
+            toppingsSet.emplace(numberOfIngredients, pizzaNumber);
+        }
 
-        initializeDeliveryStats();
+        team4Deliveries = initializeTeamDeliveries(4, team4, numberOfPizzas);
+        team3Deliveries = initializeTeamDeliveries(3, team3, numberOfPizzas);
+        team2Deliveries = initializeTeamDeliveries(2, team2, numberOfPizzas);
+        deliveries.reserve(team4Deliveries+team3Deliveries+team2Deliveries);
+
+        file.close();
     }
 
-        Delivery createDelivery(int teamSize) {
-            Delivery delivery; // teamsize, pizza#, pizza#, pizza#
-            delivery.first = teamSize;
+    Delivery createDelivery(const int teamSize) {
+        Delivery delivery; // teamsize, pizza#, pizza#, pizza#
+        delivery.first = teamSize;
 
-            PizzaNumber mostToppingsPizzaNumber = toppingsSet.rbegin()->second;
-            delivery.second.emplace_back(mostToppingsPizzaNumber);
-            set<IngredientNum> teamIngredientsNumsSet;
-            for(IngredientNum ingredientNum : pizzaMap[mostToppingsPizzaNumber]) {
-                teamIngredientsNumsSet.insert(ingredientNum);
+        PizzaNumber mostToppingsPizzaNumber = toppingsSet.rbegin()->second;
+        set<IngredientNum> teamIngredientsNumsSet = pizzaMap[mostToppingsPizzaNumber];
+        delivery.second.emplace_back(mostToppingsPizzaNumber);
+        toppingsSet.erase(*toppingsSet.rbegin());
+
+        for(int teamMember = 1; teamMember < teamSize; teamMember++) {
+            ToppingsSetIter toppingsSetPointer = toppingsSet.rbegin();
+            pair<int, int> toppingsAddedOfPizza(0, toppingsSet.rend()->second);
+
+            for (ToppingsSetIter toppingsIter = toppingsSet.rbegin(); toppingsIter != toppingsSet.rend(); toppingsIter++) {
+                if(toppingsAddedOfPizza.first > toppingsIter->first) break;
+
+                PizzaNumber pizzaNumber = toppingsIter->second;
+                vector<int> newToppings(pizzaMap[pizzaNumber].size()+teamIngredientsNumsSet.size());
+                set_difference(pizzaMap[pizzaNumber].begin(), pizzaMap[pizzaNumber].end(), teamIngredientsNumsSet.begin(), teamIngredientsNumsSet.end(), back_inserter(newToppings));
+                if(newToppings.size() > toppingsAddedOfPizza.first) {
+                    toppingsAddedOfPizza = make_pair(newToppings.size(), pizzaNumber);
+                    toppingsSetPointer = toppingsIter;
+                }
             }
-            toppingsSet.erase(*toppingsSet.rbegin());
-            pizzaMap.erase(mostToppingsPizzaNumber);
 
-            for(int teamMember = 1; teamMember < teamSize; teamMember++) {
-                auto pizzaToppingsPointer = toppingsSet.rbegin();
-                Toppings mostToppingsAdded(0, 0);
-
-                // need to improve this - is n*n rn.
-                for (PizzaToppingsSetIter toppingsIter = toppingsSet.rbegin(); toppingsIter != toppingsSet.rend(); toppingsIter++) {
-                    if(mostToppingsAdded.first > toppingsIter->first) { break; }
-
-                    PizzaNumber pizzaNumber = toppingsIter->second;
-
-                    vector<int> result;
-                    set_difference(pizzaMap[pizzaNumber].begin(), pizzaMap[pizzaNumber].end(),
-                                    teamIngredientsNumsSet.begin(), teamIngredientsNumsSet.end(),
-                                    back_inserter(result));
-                    int newToppings = result.size();
-                    
-                    if(newToppings >= mostToppingsAdded.first) {
-                        mostToppingsAdded.first = newToppings;
-                        mostToppingsAdded.second = pizzaNumber;
-                        pizzaToppingsPointer = toppingsIter;
-                    }
-                }
-
-                PizzaNumber mostToppingsAddedPizzaNumber = mostToppingsAdded.second;
-                delivery.second.emplace_back(mostToppingsAddedPizzaNumber);
-
-                for(IngredientNum ingredientNum : pizzaMap[mostToppingsAddedPizzaNumber]) {
-                    teamIngredientsNumsSet.insert(ingredientNum);
-                }
-
-                toppingsSet.erase(*pizzaToppingsPointer);
-                pizzaMap.erase(mostToppingsAddedPizzaNumber);
-            } // teamsize-1
-
-            return delivery;
+            PizzaNumber pizzaNumber = toppingsAddedOfPizza.second;
+            teamIngredientsNumsSet.insert(pizzaMap[pizzaNumber].begin(), pizzaMap[pizzaNumber].end());
+            delivery.second.emplace_back(pizzaNumber);
+            toppingsSet.erase(*toppingsSetPointer);
         }
 
-        void calculateDeliveriesOfTeam(int teamSize, int teamDeliveries) {
-            for(int i = 0; i < teamDeliveries; i++)
-                deliveries.emplace_back(createDelivery(teamSize));
-        }
+        return delivery;
+    }
 
     void calculateDeliveries() {
-        calculateDeliveriesOfTeam(4, team4Deliveries);
-        calculateDeliveriesOfTeam(3, team3Deliveries);
-        calculateDeliveriesOfTeam(2, team2Deliveries);
+        int i;
+        for(i = 0; i < team4Deliveries; i++)
+            deliveries.push_back(createDelivery(4));
+        for(i = 0; i < team3Deliveries; i++)
+            deliveries.push_back(createDelivery(3));
+        for(i = 0; i < team2Deliveries; i++)
+            deliveries.push_back(createDelivery(2));
     }
 
-    void outputDeliveries(string outputFile) {
+    void outputDeliveries(const string outputFile) {
         ofstream file(outputFile);
         file << deliveries.size() << "\n";
         for(Delivery delivery : deliveries) {
@@ -176,10 +142,10 @@ public:
     }
 };
 
-int main() { // 0.23s // 0.095
-    // Pizzaria pizzaria("files/ain.txt", "files/a_output.txt");
-    // Pizzaria pizzaria("files/bin.in", "files/b_output.txt"); // 0.1
-    Pizzaria pizzaria("files/cin.in", "files/c_output.txt"); // 10s
-    // Pizzaria pizzaria("files/din.in", "files/d_output.txt"); // 1m53s
-    // Pizzaria pizzaria("files/ein.in", "files/e_output.txt"); // 13m30s
+int main() { // 4 seconds
+    Pizzaria pizzariaA("files/ain.txt", "files/a_output.txt");
+    Pizzaria pizzariaB("files/bin.in", "files/b_output.txt"); // 0.1/
+    Pizzaria pizzariaC("files/cin.in", "files/c_output.txt"); // 9.8s
+    Pizzaria pizzariaD("files/din.in", "files/d_output.txt"); // 1m53s
+    Pizzaria pizzariaE("files/ein.in", "files/e_output.txt"); // 13m30s
 }
