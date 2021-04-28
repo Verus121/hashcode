@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
 using namespace std;
 
 typedef int PizzaNumber;
@@ -16,7 +17,7 @@ typedef int TeamSize;
 typedef int IngredientNum;
 typedef string Ingredient;
 
-typedef set<IngredientNum> IngredientsNums;
+typedef unordered_set<IngredientNum> IngredientsNums;
 typedef unordered_map<PizzaNumber, IngredientsNums> PizzaMap;
 
 typedef unordered_map<Ingredient, IngredientNum> IngredientsToNumMap;
@@ -61,6 +62,7 @@ public:
         file >> numberOfPizzas >> team2 >> team3 >> team4;
 
         IngredientsToNumMap ingredientsToNumMap;
+        
         for(PizzaNumber pizzaNumber = 0; pizzaNumber < numberOfPizzas; pizzaNumber++) {
             NumberOfIngredients numberOfIngredients;
             file >> numberOfIngredients;
@@ -90,7 +92,7 @@ public:
         delivery.first = teamSize;
 
         PizzaNumber mostToppingsPizzaNumber = toppingsSet.rbegin()->second;
-        set<IngredientNum> teamIngredientsNumsSet = pizzaMap[mostToppingsPizzaNumber];
+        set<int> teamIngredientsNumsSet = pizzaMap[mostToppingsPizzaNumber];
         delivery.second.emplace_back(mostToppingsPizzaNumber);
         toppingsSet.erase(*toppingsSet.rbegin());
 
