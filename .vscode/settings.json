@@ -11,6 +11,14 @@
         "iterator": "cpp",
         "algorithm": "cpp",
         "iosfwd": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "unordered_map": "cpp",
+        "initializer_list": "cpp",
+        "list": "cpp",
+        "type_traits": "cpp",
+        "xhash": "cpp",
+        "xutility": "cpp",
+        "unordered_set": "cpp",
+        "set": "cpp"
     }
 }

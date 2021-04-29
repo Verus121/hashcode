@@ -69,14 +69,18 @@ int getScore(string inputFile, string outputFile) {
 }
 
 int main() {
-    cout << "A Score: " << getScore("files/ain.txt", "files/a_output.txt") << endl; // 49
-    cout << "B Score: " << getScore("files/bin.in", "files/b_output.txt") << endl; // 11,555
-    cout << "C Score: " << getScore("files/cin.in", "files/c_output.txt") << endl; // 706,947,263
-    cout << "D Score: " << getScore("files/din.in", "files/d_output.txt") << endl; // 7,865,154
-    cout << "E Score: " << getScore("files/ein.in", "files/e_output.txt") << endl; // 10,791,650
+    int fileAScore = getScore("files/ain.txt", "files/a_output.txt");
+    int fileBScore = getScore("files/bin.in", "files/b_output.txt");
+    int fileCScore = getScore("files/cin.in", "files/c_output.txt");
+    int fileDScore = getScore("files/din.in", "files/d_output.txt");
+    int fileEScore = getScore("files/ein.in", "files/e_output.txt");
+    int finalScore = fileAScore + fileBScore + fileCScore + fileDScore + fileEScore;
 
-    // cout << "B Score: " << getScore("files/bin.in", "files/hunterb.txt") << endl; // 7,244
-    // cout << "C Score: " << getScore("files/cin.in", "files/hunterc.txt") << endl; // 705,442,517
-    // cout << "D Score: " << getScore("files/din.in", "files/hunterd.txt") << endl; // 7,747,922
-    // cout << "E Score: " << getScore("files/ein.in", "files/huntere.txt") << endl; // 10,674,218
+    cout << "A Score: " << fileAScore << "\n"; // 49
+    cout << "B Score: " << fileBScore << "\n"; // 11,555
+    cout << "C Score: " << fileCScore << "\n"; // 706,947,263
+    cout << "D Score: " << fileDScore << "\n"; // 7,865,154
+    cout << "E Score: " << fileEScore << "\n"; // 10,791,650
+
+    cout << "Final Score: " << finalScore << "\n";
 }
