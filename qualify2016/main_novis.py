@@ -1,3 +1,4 @@
+from collections import defaultdict
 from math import ceil, sqrt 
 
 file = open("files/redundancy.in", "r")
@@ -92,14 +93,28 @@ for i in range (n_product_types):
     # item2 : producttype (weight), current location, destination. 
     # item3 : producttype (weight), current location, destination. 
 
-product_shipping_list = []
-for warehouse_data in warehouse_datas:
-    for i in range(len(warehouse_data[1])):
-        for j in range(warehouse_data[1][i]):
-            product_shipping_info = [i, warehouse_data[0]]
-            product_shipping_list.append(product_shipping_info)
+# product_shipping_list = []
+# for warehouse_data in warehouse_datas:
+#     for i in range(len(warehouse_data[1])):
+#         for j in range(warehouse_data[1][i]):
+#             product_shipping_info = [i, warehouse_data[0]]
+#             product_shipping_list.append(product_shipping_info)
 
 # print(product_shipping_list)
+
+### HUNTER CHANGE # 1:
+### CHANGE PRODUCT_SHIPPING_LIST TO PRODUCT_SHIPPING_DICT
+# get all items and put in dictionary
+# proudct_shipping_dict
+    # (item, ware_coordinate): number_of_such_item
+
+product_shipping_dict=  defaultdict(int)
+for warehouse_data in warehouse_datas:
+    for i in range(len(warehouse_data[1])):
+        item_cords_key = (i, tuple(warehouse_data[0]))
+        product_shipping_dict[item_cords_key] = warehouse_data[1][i]
+
+
 
 # for each customer in customers
     # create warehouse_sorted_by_distance_to_customer_list 
@@ -108,24 +123,41 @@ for warehouse_data in warehouse_datas:
             # if item in warehouse and item has no end
                 # update shipping_plan_list
 
+# for order in order_datas:
+#     warehouse_sorted_by_distance_to_customer_list = sorted(warehouse_datas, key=lambda x: ((x[0][0] - order[0][0])**2 + (x[0][1] - order[0][1])**2))
+#     # print(order[0], [x[0] for x in warehouse_sorted_by_distance_to_customer_list])
+#     for item in order[1]:
+#         for warehouse in warehouse_sorted_by_distance_to_customer_list:
+#             ware_coordinate = warehouse[0]
+#             product_info = [item, ware_coordinate]
+#             for product_shipping_info in product_shipping_list:
+#                 if product_info == product_shipping_info:
+#                     product_shipping_info.append(order[0])
+#                     break
+
+# for product_shipping_item in product_shipping_list:
+#     if len(product_shipping_item) == 2:
+#         product_shipping_list.remove(product_shipping_item)
+
+# product_shipping_list = [x for x in product_shipping_list if len(x) == 3]
+
+### HUNTER CHANGE 2
+### make the above loop more efficient with product_shipping_dict
+
+new_product_shipping_list = []
 for order in order_datas:
     warehouse_sorted_by_distance_to_customer_list = sorted(warehouse_datas, key=lambda x: ((x[0][0] - order[0][0])**2 + (x[0][1] - order[0][1])**2))
     # print(order[0], [x[0] for x in warehouse_sorted_by_distance_to_customer_list])
     for item in order[1]:
         for warehouse in warehouse_sorted_by_distance_to_customer_list:
             ware_coordinate = warehouse[0]
-            product_info = [item, ware_coordinate]
-            for product_shipping_info in product_shipping_list:
-                if product_info == product_shipping_info:
-                    product_shipping_info.append(order[0])
-                    break
+            product_info = (item, tuple(ware_coordinate))
+            if (product_info in product_shipping_dict) and (product_shipping_dict[product_info] > 0):
+                new_product_shipping_list.append([item, ware_coordinate, order[0]])
+                product_shipping_dict[product_info] -= 1
+                break
 
-# for product_shipping_item in product_shipping_list:
-#     if len(product_shipping_item) == 2:
-#         product_shipping_list.remove(product_shipping_item)
-
-product_shipping_list = [x for x in product_shipping_list if len(x) == 3]
-
+product_shipping_list = new_product_shipping_list
 # print("start")
 # for product_shipping_item in product_shipping_list:
 #     print(product_shipping_item)
