@@ -50,12 +50,17 @@ class SimulationData:
             # project_skills
             project_number_of_skills = project_info[-1]
 
-            name_to_level_dict = {}
+            # name_to_level_dict = {}
+            name_to_level_dict = defaultdict(list)
+
             for j in range(project_number_of_skills): # fill name_to_level_dict
                 skill = file_data[current_line+j+1]
                 skill_name = skill[0]
                 skill_level = int(skill[1])
-                name_to_level_dict[skill_name] = skill_level
+                # name_to_level_dict[skill_name] = skill_level
+                name_to_level_dict[skill_name].append(skill_level)
+                name_to_level_dict[skill_name] = sorted(name_to_level_dict[skill_name], reverse=True)
+
 
             self.projects_skills_dict[project_name] = name_to_level_dict # fill projects_skills_dict
         
