@@ -80,8 +80,8 @@ def solve(people_skills, person_is_working, project_info, project_skills):
                     del project_assignment[project]
                     assigned_projects+=1
         time +=1
-    print(score)
-    output_string = "{assigned_projects}\n{output_string[:-1]}"
+    print(f"score: {score}")
+    output_string = f"{assigned_projects}\n{output_string[:-1]}"
     return output_string
                 
 
