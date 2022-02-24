@@ -1,3 +1,4 @@
+from collections import defaultdict
 
 class SimulationData:
     def __init__(self, file_name):
@@ -19,7 +20,7 @@ class SimulationData:
 
             contributor_number_of_skills = int(file_data[current_line][1])
 
-            name_to_level_dict = {}
+            name_to_level_dict = defaultdict(int)
             for j in range(contributor_number_of_skills): # fill name_to_level_dict
                 skill = file_data[current_line+j+1]
                 skill_name = skill[0]
