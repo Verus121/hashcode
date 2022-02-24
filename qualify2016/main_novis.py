@@ -1,7 +1,7 @@
 from collections import defaultdict
 from math import ceil, sqrt 
 
-file = open("files/redundancy.in", "r")
+file = open("files/test.in", "r")
 
 file_data = []
 for line in file:
@@ -48,7 +48,20 @@ print("product_weights:", product_weights) # gives product weights
 print("n_warehouses:", n_warehouses)
 # print("warehouse_datas:", warehouse_datas) # gives number of warehouses
 print("n_orders:", n_orders)
-# print("order_datas:", order_datas) # gives number of orders.
+print("order_datas:", order_datas) # gives number of orders.
+
+customer_data = {}
+for order in order_datas:
+    order_location_key = tuple(order[0])
+    order_data = defaultdict(int)
+    customer_data[order_location_key] = order_data
+    for product in order[1]:
+        key = product
+        order_data[key] += 1
+
+print(customer_data)
+# exit()
+
 
 # get all items and put in list 
 # product_shipping_list 
@@ -168,9 +181,15 @@ for _ in range(n_drones):
     list_of_product_shipping_lists.append([])
 
 # droneiter = 0
-for i in range(len(product_shipping_list)):
-    droneid = (i % n_drones)
-    list_of_product_shipping_lists[droneid].append(product_shipping_list[i])
+
+#### TEMP FOR TESTING ANDY TIMS ORG
+# for i in range(len(product_shipping_list)):
+#     droneid = (i % n_drones)
+#     list_of_product_shipping_lists[droneid].append(product_shipping_list[i])
+
+
+#### TEMP FOR TESTING ANDY TIMS NEW SINGLE DRONE
+list_of_product_shipping_lists[0] = product_shipping_list
 
 # print("hi")
 # for drone_todos in list_of_product_shipping_lists:
@@ -223,6 +242,9 @@ for droneid, droneid_instructions_list in enumerate(drones_instructions_list):
         droneid_instructions_list.append(['F', product[0], droneid_instructions_list[-1][-1], product[2]]) # end 
         droneid_instructions_list.append(['U', product[0], product[2]]) # end 
 
+# print(drones_instructions_list)
+# exit()
+
 # print("\n\n\n")
 # for i, droneid_instructions_list in enumerate(drones_instructions_list):
 #     print("Instructions for drone", i)
@@ -246,19 +268,75 @@ for droneid, droneid_instructions_list in enumerate(drones_instructions_list):
         # euclidDist = func(start, end)
         # time += ceil(eucliddist)
 
+
+customer_max_time = defaultdict(int)
+# SIMULATION IS COMPLETELY FUCKED
+# SOLUTION: KEEP TRACK OF WHEN CUSTOMERS ARE DELIVERED (END OF SIMULATION, TAKE THE MAX TIME DELIVERED AS LAST DELIVER)
+# DRONE SIMULATION 
+current_score = 0
 for droneid, droneid_instructions_list in enumerate(drones_instructions_list):
     time = 0
     for step in droneid_instructions_list:
+        if time >= n_turns:
+            break
+
         if len(step) == 1:
             continue
-        if step[0] in ["L", "U"]:
+        if step[0] == "L":
             time += 1
+        if step[0] == "U":
+            customer_location = tuple(step[2])
+            product = step[1]
+            if time > customer_max_time[customer_location]:
+                customer_max_time[customer_location] = time
+            customer_data[customer_location][product] -= 1
+            if customer_data[customer_location][product] == 0:
+                del customer_data[customer_location][product] 
+                if len(customer_data[customer_location]) == 0:
+                    del customer_data[customer_location]
+                    # current_score += ceil((n_turns - time) / n_turns * 100)
+            time += 1 # end
         if step[0] == "F":
             start = step[2]
             end = step[3]
             euclidDist = sqrt((start[0] - end[0])**2 + (start[1] - end[1])**2)
             time += ceil(euclidDist)
     print(f"time for drone {droneid} to deliver: {time}")
+    if time >= n_turns:
+        break
 
 # print("drone delivery time: ", time)
 print("simul time: ", n_turns)
+
+score = 0
+for cords in customer_max_time:
+    current_score += ceil((n_turns - customer_max_time[cords]) / n_turns * 100)
+if len(customer_data) > 0:
+    print("You fucked up")
+else:
+    score = current_score
+
+print(current_score, score)
+
+
+
+
+
+# for order in order data
+    # create order_location_key = order location
+    # create orderlocation dict 
+    # point key to orderlocation_dict 
+    # for products in order
+        # key = product id
+        # value = number of product_id requested
+
+
+
+# customer data into dictionary 
+# customerid -> itemid -> req. 
+# remove n from req, given customerid and itemid 
+# if req == 0 then remove itemid
+# if customerid -> empty then remove customerid 
+    # on customerid removal, 
+    # points += simtime - current time
+

@@ -1,4 +1,4 @@
-from math import prod
+# from math import prod
 
 
 class Coordinate:
@@ -8,7 +8,6 @@ class Coordinate:
     
     def print(self):
         print("[", self.row, ",", self.col, "]")
-
 
 
 # Main
