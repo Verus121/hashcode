@@ -1,5 +1,5 @@
-## for finding skill within available people
-def find_skill(skill, required_level, people_skills, person_is_working, assigned_people):
+## for finding skill (with the appropriate level) within available people
+def find_skill_level(skill, required_level, people_skills, person_is_working, assigned_people):
     for person in people_skills:
         if person_is_working[person]:
             continue
@@ -18,9 +18,10 @@ def find_project(project, people_skills, person_is_working, project_skills, proj
     # dictionary: {person: (skill, required_level, current_level_of_person)}
     assigned_people = {}
     for skill in project_skills[project]:
-        required_level = project_skills[project][skill]
-        if not(find_skill(skill, required_level, people_skills, person_is_working, assigned_people)):
-            return False
+        for required_level in project_skills[project][skill]:
+            if not(find_skill_level(skill, required_level, people_skills, person_is_working, assigned_people)):
+                return False
+
     project_assignment[project] = assigned_people
     for person in project_assignment[project]:
         person_is_working[person] = True
@@ -92,8 +93,10 @@ def solve(people_skills, project_info, project_skills):
         time +=1
     print(f"score:{score}")
     output_string = f"{assigned_projects}\n{output_string[:-1]}"
-    print(f"output:\n{output_string}")
+    # print(f"output:\n{output_string}")
     return output_string
+
+
 
 
 
