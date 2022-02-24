@@ -8,7 +8,7 @@ d_file = "files/d_dense_schedule.in.txt"
 e_file = "files/e_exceptional_skills.in.txt"
 f_file = "files/f_find_great_mentors.in.txt"
 
-file = b_file
+file = a_file
 
 sim = input.SimulationData(file)
 sim.print_info()

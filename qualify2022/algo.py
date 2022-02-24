@@ -22,7 +22,7 @@ def find_project(project, people_skills, person_is_working, project_skills, proj
         if not(find_skill(skill, required_level, people_skills, person_is_working, assigned_people)):
             return False
     project_assignment[project] = assigned_people
-    for person in project_assignment:
+    for person in project_assignment[project]:
         person_is_working[person] = True
     return True
 
@@ -72,6 +72,7 @@ def solve(people_skills, project_info, project_skills):
     output_string = ""
     for project in project_info:
         project_is_working[project] = [False, -1]
+
     while len(done_project) < len(project_info):
         output_string = solve_day(people_skills, person_is_working, project_skills, project_info, project_is_working, project_assignment, output_string)
         for project in project_is_working:
@@ -80,7 +81,7 @@ def solve(people_skills, project_info, project_skills):
             if project_is_working[project][0]:
                 project_is_working[project][1] -= 1
                 if project_is_working[project][1] == 0:
-                    score += max(project_info[project][1] - (max(time - project_info[project][1], 0)), 0)
+                    score += max(project_info[project][1] - (max(time + 1 - project_info[project][2], 0)), 0)
                     for person in project_assignment[project]:
                         if people_skills[person][project_assignment[project][person][0]] <= project_assignment[project][person][1]:
                             people_skills[person][project_assignment[project][person][0]] +=1
